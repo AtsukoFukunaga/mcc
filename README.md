@@ -1,4 +1,4 @@
-# mcc
+# MCC
 ## Construct distance-based multivariate control charts
 
 These codes produce distance-based multivariate control charts (dt and dbt) from a data frame of abundance data (e.g. fish count, benthic cover) and a data frame of factors.<br>
