@@ -1,8 +1,3 @@
-library(vegan)
-library(tidyverse)
-library(ggplot2)
-
-
 # Function to get dt and dbt for multivariate control charts.
 # Input should be the pco_data from get_pco_scores()
 # and b (the number of time points to be used as baseline for dbt).
@@ -151,45 +146,3 @@ qt95 <- function(dat) {
 qt50 <- function(dat) {
   quantile(dat, probs = 0.50, na.rm = T)
 }
-
-
-### MCC and bootstrap example
-
-# load data (e.g. data file containing a data frame of fish count and a data frame for factors)
-load("rda_files/data.rda") # load "fish" and "factor" data frames
-
-# get Bray-Curtis dissimilarity
-fish_sqrt <- sqrt(fish)   # sqrt transform fish count, not always necessary to transform
-fish_bray <- as.matrix(vegdist(fish_sqrt, "bray")) * 100  # a matrix of Bray-Curtis dissimilarity scaled from 0 to 100
-
-# obtain pco scores
-pco_data <- get_pco_scores(fish_bray, factor)  # input should be a matrix of dissimilarity and a dataframe of factors with "year" and "site" columns
-save(pco_data, file = "rda_files/fish_pco.rda")  # save pco_data to create regional mcc later
-
-# obtain dt and dbt for mcc with b = 2 (first 2 years as baseline data)
-mcc_data <- mcc(pco_data, b = 2)
-
-# obtain bootstrap dt and dbt with 1000 bootstrap resampling
-mcc_boot_data <- mcc_bootstrap(pco_data, mcc_data, b = 2, nboot = 1000)  # this will take some time to run
-
-save(mcc_boot_data, file = "rda_files/fish_mcc.rda")  # give an appropriate name and save
-
-rm(list = ls()) # empty the environment
-
-load("rda_files/fish_mcc.rda")  # re-load the mcc_boot_data with 1000 bootstrap re-sampling
-
-# dt data for plotting
-dt_data <- mcc_boot_data$dt_data %>%
-  rowwise() %>%
-  mutate(dt95 = qt95(c_across(V1:V1000)), dt50 = qt50(c_across(V1:V1000))) %>%
-  select(site, year, dt, dt95, dt50)
-
-# dbt data for plotting
-dbt_data <- mcc_boot_data$dbt_data %>%
-  rowwise() %>% 
-  mutate(dbt95 = qt95(c_across(V1:V1000)), dbt50 = qt50(c_across(V1:V1000))) %>%
-  select(site, year, dbt, dbt95, dbt50) %>%
-  group_by(site) %>%
-  mutate(dbt95 = mean(dbt95, na.rm = TRUE), dbt50 = mean(dbt50, na.rm = TRUE))
-
-# if plotting sites grouped by region, average dt95/dbt95 and dt50/dbt50 from the sites within each region for regional qt95 and qt50
