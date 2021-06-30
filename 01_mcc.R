@@ -214,14 +214,15 @@ load("rda_files/fish_mcc.rda")  # re-load the mcc_boot_data with 1000 bootstrap 
 # dt data for plotting
 dt_data <- mcc_boot_data$dt_data %>%
   rowwise() %>%
-  mutate(qt95 = qt95(c_across(V1:V1000)), qt50 = qt50(c_across(V1:V1000))) %>%
-  select(site, year, dt, qt95, qt50)
+  mutate(dt95 = qt95(c_across(V1:V1000)), dt50 = qt50(c_across(V1:V1000))) %>%
+  select(site, year, dt, dt95, dt50)
 
 # dbt data for plotting
 dbt_data <- mcc_boot_data$dbt_data %>%
   rowwise() %>% 
-  mutate(qt95 = qt95(c_across(V1:V1000)), qt50 = qt50(c_across(V1:V1000))) %>%
-  select(site, year, dbt, qt95, qt50)
+  mutate(dbt95 = qt95(c_across(V1:V1000)), dbt50 = qt50(c_across(V1:V1000))) %>%
+  select(site, year, dbt, dbt95, dbt50) %>%
+  group_by(site) %>%
+  mutate(dbt95 = mean(dbt95, na.rm = TRUE), dbt50 = mean(dbt50, na.rm = TRUE))
 
-# for dbt obtain mean qt95 and qt50 per site for confidence bounds
-# if plotting sites grouped by region, use mean qt95 and qt50 for regional qt95 and qt50
+# if plotting sites grouped by region, average dt95/dbt95 and dt50/dbt50 from the sites within each region for regional qt95 and qt50
