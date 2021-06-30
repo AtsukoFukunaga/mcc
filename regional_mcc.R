@@ -1,9 +1,3 @@
-library(vegan)
-library(ggplot2)
-library(tidyverse)
-library(gridExtra)
-
-
 # Function to get dt and dbt for regional multivariate control charts.
 # Input should be the pco_data from get_pco_scores()
 # and b (the number of time points to be used as baseline for dbt).
@@ -159,41 +153,3 @@ qt95 <- function(dat) {
 qt50 <- function(dat) {
   quantile(dat, probs = 0.50, na.rm = T)
 }
-
-
-### regional MCC and bootstrap example
-
-# load fish_pco.rda from 01_mcc.R
-load("rda_files/fish_pco.rda")
-
-# add "region" column to pco_df
-# for example, if sites "F01" "F02" "F03" are in "west" region and "F04" "F05" F06" are in "east" region 
-pco_data$pco_df$region <- ""  # add region column to split data by region
-pco_data$pco_df$region[pco_data$pco_df$site %in% c("F01", "F02", "F03")] <- "west"
-pco_data$pco_df$region[pco_data$pco_df$site %in% c("F04", "F05", "F06")] <- "east"
-
-# obtain dt and dbt for regional mcc with b = 2 (first 2 years as baseline data)
-mcc_data <- regional_mcc(pco_data, b = 2)
-
-# obtain bootstrap dt and dbt with 1000 bootstrap resampling
-mcc_boot_data <- mcc_bootstrap(pco_data, mcc_data, b = 2, nboot = 1000)  # this will take some time to run
-
-save(dt_data, dbt_data, file = "rda_files/fish_region_mcc.rda")  # give an appropriate name and save
-
-rm(list = ls())
-
-load("rda_files/fish_region_mcc.rda")  # re-load the regional mcc_boot_data with 1000 bootstrap re-sampling
-
-# dt data for plotting
-dt <- mcc_boot_data$dt_data %>%
-  rowwise() %>%
-  mutate(dt95 = qt95(c_across(V1:V1000)), dt50 = qt50(c_across(V1:V1000))) %>%
-  select(year, region, dt, dt95, dt50)
-
-# dbt data for plotting
-dbt <- mcc_boot_data$dbt_data %>%
-  rowwise() %>%
-  mutate(dbt95 = qt95(c_across(V1:V1000)), dbt50 = qt50(c_across(V1:V1000))) %>%
-  select(year, region, dbt, dbt95, dbt50) %>%
-  group_by(region) %>%
-  mutate(dbt95 = mean(dbt95, na.rm = TRUE), dbt50 = mean(dbt50, na.rm = TRUE))
