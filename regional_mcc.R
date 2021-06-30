@@ -4,10 +4,12 @@
 
 regional_mcc <- function(pco_data, b) {
   
+  require(tidyverse)
+  
   pco_df <- pco_data$pco_df
   
   pco_ave_df <- pco_df %>% 
-    select(-site) %>% 
+    select(contains("V"), year, region) %>%
     group_by(year, region) %>% 
     summarise_all(mean) %>%
     select(contains("V"), year, region)
