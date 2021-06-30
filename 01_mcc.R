@@ -1,4 +1,5 @@
 library(vegan)
+library(tidyverse
 library(ggplot2)
 
 
@@ -175,6 +176,16 @@ mcc_bootstrap <- function(pco_data, mcc_data, b, nboot) {
 }
 
 
+# Functions to calculate 50 and 95 percentiles
+
+qt95 <- function(dat) {
+  quantile(dat, probs = 0.95, na.rm = T)
+}
+qt50 <- function(dat) {
+  quantile(dat, probs = 0.50, na.rm = T)
+}
+
+
 ### MCC and bootstrap example
 
 # load data (e.g. data file containing a data frame of fish count and a data frame for factors)
@@ -196,3 +207,20 @@ mcc_boot_data <- mcc_bootstrap(pco_data, mcc_data, b = 2, nboot = 1000)  # this 
 save(mcc_boot_data, file = "rda_files/fish_mcc.rda")  # give an appropriate name and save
 
 rm(list = ls()) # empty the environment
+
+load("rda_files/fish_mcc.rda")  # re-load the mcc_boot_data with 1000 bootstrap re-sampling
+
+# dt data for plotting
+dt_data <- mcc_boot_data$dt_data %>%
+  rowwise() %>%
+  mutate(qt95 = qt95(c_across(V1:V1000)), qt50 = qt50(c_across(V1:V1000))) %>%
+  select(site, year, dt, qt95, qt50)
+
+# dbt data for plotting
+dbt_data <- mcc_boot_data$dbt_data %>%
+  rowwise() %>% 
+  mutate(qt95 = qt95(c_across(V1:V1000)), qt50 = qt50(c_across(V1:V1000))) %>%
+  select(site, year, dbt, qt95, qt50)
+
+# for dbt obtain mean qt95 and qt50 per site for confidence bounds
+# if plotting sites grouped by region, use mean qt95 and qt50 for regional qt95 and qt50
