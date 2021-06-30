@@ -197,6 +197,7 @@ fish_bray <- as.matrix(vegdist(fish_sqrt, "bray")) * 100  # a matrix of Bray-Cur
 
 # obtain pco scores
 pco_data <- get_pco_scores(fish_bray, factor)  # input should be a matrix of dissimilarity and a dataframe of factors with "year" and "site" columns
+save(pco_data, file = "rda_files/fish_pco.rda")  # save pco_data to create regional mcc later
 
 # obtain dt and dbt for mcc with b = 2 (first 2 years as baseline data)
 mcc_data <- mcc(pco_data, b = 2)
