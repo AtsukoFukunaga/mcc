@@ -2,10 +2,10 @@ library(vegan)
 library(ggplot2)
 
 
-# function to get PCO scores in data frame, # of positive and negative eigenvalues
-# input should be a matrix of distance/dissimilarity
-# and a data frame of factors (factor_unit) with "year" and "site" columns
-# input_matrix and factor_df should have the same number of rows (samples)
+# Function to get PCO scores in data frame, # of positive and negative eigenvalues.
+# Input should be a matrix of distance/dissimilarity
+# and a data frame of factors (factor_df) with "year" and "site" columns.
+# input_matrix and factor_df should have the same number of rows (samples).
 
 get_pco_scores <- function(input_matrix, factor_df) {
   
@@ -35,9 +35,9 @@ get_pco_scores <- function(input_matrix, factor_df) {
 }
 
 
-# function to get dt and dbt for multivariate control charts
-# input should be the pco_data from get_pco_scores() 
-# and b (the number of time points to be used as baseline for dbt)
+# Function to get dt and dbt for multivariate control charts.
+# Input should be the pco_data from get_pco_scores()
+# and b (the number of time points to be used as baseline for dbt).
 
 mcc <- function(pco_data, b) {
   
@@ -95,9 +95,9 @@ mcc <- function(pco_data, b) {
 }
 
 
-# function for bootstrapping to get confidence intervals
-# input should be the pco_data and mcc_data from the above functions
-# and b and nboot (the number of bootstrap)
+# Function for bootstrapping to get confidence bounds later.
+# Input should be the pco_data and mcc_data from the above functions (get_pco_scores() and mcc())
+# and b and nboot (the number of bootstrap).
 
 mcc_bootstrap <- function(pco_data, mcc_data, b, nboot) {
   
@@ -175,30 +175,24 @@ mcc_bootstrap <- function(pco_data, mcc_data, b, nboot) {
 }
 
 
-### MCC and bootstrap, continued from 01_data_prep.R
+### MCC and bootstrap example
 
-# pick either fish or coral data
+# load data (e.g. data file containing a data frame of fish count and a data frame for factors)
+load("rda_files/data.rda") # load "fish" and "factor" data frames
 
-load("rda_files/kala_fish.rda")
-# load("rda_files/kaho_coral_mcc.rda")
+# get Bray-Curtis dissimilarity
+fish_sqrt <- sqrt(fish)   # sqrt transform fish count, not always necessary to transform
+fish_bray <- as.matrix(vegdist(fish_sqrt, "bray")) * 100  # a matrix of Bray-Curtis dissimilarity scaled from 0 to 100
 
-# get Bray-Curtis dissimilarity (fish or coral)
+# obtain pco scores
+pco_data <- get_pco_scores(fish_bray, factor)  # input should be a matrix of dissimilarity and a dataframe of factors with "year" and "site" columns
 
-# fish
-fish_sqrt <- sqrt(fish_unit_mcc)   # sqrt transform fish count
-fish_bray <- as.matrix(vegdist(fish_sqrt, "bray")) * 100  # Bray-Curtis dissimilarity scaled from 0 to 100
-
-# coral
-# coral_bray <- as.matrix(vegdist(coral_unit_mcc, "bray")) * 100
-
-pco_data <- get_pco_scores(fish_bray, factor_unit)  # input should be fish_bray or coral_bray
-save(pco_data, file = "rda_files/kala_fish_pco.rda")  # name appropriately
-
+# obtain dt and dbt for mcc with b = 2 (first 2 years as baseline data)
 mcc_data <- mcc(pco_data, b = 2)
 
-mcc_boot_data <- mcc_bootstrap(pco_data, mcc_data, b = 2, nboot = 1000)
+# obtain bootstrap dt and dbt with 1000 bootstrap resampling
+mcc_boot_data <- mcc_bootstrap(pco_data, mcc_data, b = 2, nboot = 1000)  # this will take some time to run
 
-save(mcc_boot_data, file = "rda_files/kala_fish_mcc.rda")  # give an appropriate name
+save(mcc_boot_data, file = "rda_files/fish_mcc.rda")  # give an appropriate name and save
 
-rm(list = ls())
-
+rm(list = ls()) # empty the environment
