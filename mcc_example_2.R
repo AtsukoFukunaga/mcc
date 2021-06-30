@@ -1,6 +1,7 @@
 # Example of constructing regional MCC using get_pco_scores() 
 
 library(vegan)
+library(tidyverse)
 library(ggplot2)
 
 source("pco_scores.R")
